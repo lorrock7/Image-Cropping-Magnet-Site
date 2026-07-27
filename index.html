@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- CropperJS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css"
+    />
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Cropping Test</h2>
+        <input type="file" id="imageInput" accept="image/*">
+        <div class="image-container">
+            <img id="image">
+        </div>
+        <button id="cropButton">Crop Image</button>
+        <h3>Result</h3>
+        <canvas id="canvas"></canvas>
+
+    </div>
+
+    <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
+    <script src="cropping.js"></script>
+
+</body>
+
+</html>
