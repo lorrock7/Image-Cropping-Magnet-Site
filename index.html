@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- CropperJS -->
+     CropperJS 
     <link
         rel="stylesheet"
         href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css"
@@ -33,4 +33,70 @@
 
 </body>
 
+</html> -->
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link
+    rel="stylesheet"
+    href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css"
+>
+
+<link rel="stylesheet" href="style.css">
+
+<title>Multiple Image Cropper</title>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Image Upload and Cropper</h1>
+
+<p>You can upload and edit up to 4 images.</p>
+
+<!-- Image Slots -->
+<div id="imageSlots" class="image-slots"></div>
+
+
+<!-- Editor -->
+<div id="editor" class="editor">
+
+    <h2>Edit Image</h2>
+
+    <input
+        type="file"
+        id="imageInput"
+        accept="image/*"
+    >
+
+    <div class="image-container">
+        <img id="image">
+    </div>
+
+    <button id="cropButton">
+        Save Crop
+    </button>
+
+</div>
+
+
+<!-- Final Images -->
+<h2>Your Images</h2>
+
+<div id="results" class="results"></div> 
+
+</div>
+
+<script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
+
+<script src="cropping.js"></script>
+
+</body>
 </html>
