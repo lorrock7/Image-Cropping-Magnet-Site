@@ -1,87 +1,10 @@
-// // Variables //
-// let cropper;
-
-// // Constants //
-// const image = document.getElementById("image");
-// const input = document.getElementById("imageInput");
-// const canvas = document.getElementById("canvas");
-// const cropButton = document.getElementById("cropButton");
-
-// // Functions //
-// input.addEventListener("change", function(e){
-
-//     const files = e.target.files;
-
-//     if(files && files.length > 0){
-//         const reader = new FileReader();
-//         reader.onload = function(event){
-//             image.src = event.target.result;
-//             image.onload = function(){
-
-//                 // Kill Previous Instance //
-//                 if(cropper){
-//                     cropper.destroy();
-//                 } // End If //
-
-//                 cropper = new Cropper(image,{
-//                     aspectRatio:1,
-//                     viewMode:1,
-//                     dragMode:'move',
-//                     autoCropArea:1,
-//                     responsive:true,
-//                     movable:true,
-//                     zoomable:false,
-//                     scalable:false,
-//                     rotatable:false
-//                 });
-
-//             } // End Function //
-
-//         } // End Function //
-
-//         reader.readAsDataURL(files[0]);
-
-//     } // End If //
-
-// }); // End Event Listener //
-
-// cropButton.addEventListener("click", function(){
-
-//     if(!cropper) return;
-
-//     const croppedCanvas = cropper.getCroppedCanvas({ width:500, height:500 });
-
-//     canvas.width = 500;
-//     canvas.height = 500;
-
-//     const ctx = canvas.getContext("2d");
-
-//     ctx.clearRect(0,0,500,500);
-//     ctx.drawImage(croppedCanvas,0,0);
-
-//     // Base64 string <!> MAY NEED BLOB <!> //
-//     const imageData = croppedCanvas.toDataURL("image/png");
-
-//     console.log(imageData);
-
-// });
-
+// Variables //
 const MAX_IMAGES = 4;
 
 let cropper = null;
 let selectedSlot = null;
 
-// Store the cropped images.
-//
-// Example:
-//
-// images = [
-//     "data:image/png;base64,...",
-//     null,
-//     "data:image/png;base64,...",
-//     null
-// ];
-
+// Storing images to allow for multiple submissions //
 let images = new Array(MAX_IMAGES).fill(null);
 
 const image = document.getElementById("image");
@@ -92,269 +15,153 @@ const imageSlots = document.getElementById("imageSlots");
 const results = document.getElementById("results");
 const editor = document.getElementById("editor");
 
-// --------------------------------------------------
-// CREATE IMAGE SLOTS
-// --------------------------------------------------
-
+// Image Slots for Uploads //
 function createImageSlots() {
 
-imageSlots.innerHTML = "";
+    imageSlots.innerHTML = "";
 
-for (let i = 0; i < MAX_IMAGES; i++) {
+    for (let i = 0; i < MAX_IMAGES; i++) {
+        
+        const slot = document.createElement("div");
+        slot.classList.add("image-slot");
+        slot.dataset.index = i;
+        const number = document.createElement("div");
+        number.classList.add("slot-number");
+        number.textContent = `Image ${i + 1}`;
+        slot.appendChild(number);
 
-    const slot = document.createElement("div");
+        // Displaying selected cropped images //
+        if (images[i]) {
+            const img = document.createElement("img");
+            img.src = images[i];
+            slot.appendChild(img);
+        } // End If //
+        else {
+            const text = document.createElement("div");
+            text.classList.add("empty-slot");
+            text.textContent = "Click to Upload";
+            slot.appendChild(text);
+        } // End Else //
 
-    slot.classList.add("image-slot");
+        // Allows Slots to be clicked and reselected //
+        slot.addEventListener("click", function() {
+            selectSlot(i);
+        });
 
-    slot.dataset.index = i;
+        imageSlots.appendChild(slot);
 
+    } // End For //
 
-    // Slot number
+} // End Function //
 
-    const number = document.createElement("div");
-
-    number.classList.add("slot-number");
-
-    number.textContent = `Image ${i + 1}`;
-
-    slot.appendChild(number);
-
-
-    // If image exists, display it
-
-    if (images[i]) {
-
-        const img = document.createElement("img");
-
-        img.src = images[i];
-
-        slot.appendChild(img);
-
-    } else {
-
-        const text = document.createElement("div");
-
-        text.classList.add("empty-slot");
-
-        text.textContent = "Click to Upload";
-
-        slot.appendChild(text);
-
-    }
-
-
-    // Click slot
-
-    slot.addEventListener("click", function() {
-
-        selectSlot(i);
-
-    });
-
-
-    imageSlots.appendChild(slot);
-
-}
-
-
-}
-
-// --------------------------------------------------
-// SELECT SLOT
-// --------------------------------------------------
-
+// Select Slot for Image Upload //
 function selectSlot(index) {
+    
+    selectedSlot = index;
+    editor.style.display = "block";
 
+    // Handles if an image has already been uploaded //
+    if (images[index]) {
+        loadImage(images[index]);
+    } // End If //
+    // No image fresh upload //
+    else {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        } // End If //
+        image.src = "";
+        imageInput.value = "";
+    } // End Else //
 
-selectedSlot = index;
+} // End Function //
 
-editor.style.display = "block";
-
-
-// If image already exists,
-// load it directly into Cropper.
-
-if (images[index]) {
-
-    loadImageIntoCropper(images[index]);
-
-} else {
-
-    // No image yet.
-    // Clear previous editor.
-
-    if (cropper) {
-
-        cropper.destroy();
-
-        cropper = null;
-
-    }
-
-    image.src = "";
-
-    imageInput.value = "";
-
-}
-
-
-}
-
-// --------------------------------------------------
-// UPLOAD NEW IMAGE
-// --------------------------------------------------
-
+// Image Upload //
 imageInput.addEventListener("change", function(event) {
 
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    } // End If //
 
-const file = event.target.files[0];
+    const reader = new FileReader();
 
-if (!file) {
-    return;
-}
+    reader.onload = function(event) {
+        loadImage(event.target.result);
+    };
 
-
-const reader = new FileReader();
-
-
-reader.onload = function(event) {
-
-    loadImageIntoCropper(event.target.result);
-
-};
-
-
-reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
 
 });
 
-// --------------------------------------------------
-// LOAD IMAGE INTO CROPPER
-// --------------------------------------------------
+// Allow Photo to be Cropped in the Cropper //
+function loadImage(imageSource) {
 
-function loadImageIntoCropper(imageSource) {
+    // Destroy Cropper Instance //
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    } // End If //
 
-// Destroy previous Cropper
+    image.src = imageSource;
+    image.onload = function() {
+        cropper = new Cropper(image, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: "move",
+            autoCropArea: 1,
+            responsive: true,
+            movable: true,
+            zoomable: true,
+            scalable: false,
+            rotatable: false
+        });
+    };
 
-if (cropper) {
+} // End Function //
 
-    cropper.destroy();
-
-    cropper = null;
-
-}
-
-
-image.src = imageSource;
-
-
-image.onload = function() {
-
-    cropper = new Cropper(image, {
-
-        aspectRatio: 1,
-
-        viewMode: 1,
-
-        dragMode: "move",
-
-        autoCropArea: 1,
-
-        responsive: true,
-
-        movable: true,
-
-        zoomable: true,
-
-        scalable: false,
-
-        rotatable: false
-
-    });
-
-};
-
-
-}
-
-// --------------------------------------------------
-// SAVE CROPPED IMAGE
-// --------------------------------------------------
-
+// Save Current Crop //
 cropButton.addEventListener("click", function() {
 
-if (!cropper || selectedSlot === null) {
-
-    alert("Please select an image first.");
-
-    return;
-
-}
+    if (!cropper || selectedSlot === null) {
+        alert("Please select an image first.");
+        return;
+    } // End If //
 
 
-const croppedCanvas = cropper.getCroppedCanvas({
+    const croppedCanvas = cropper.getCroppedCanvas({
+        width: 500,
+        height: 500
+    });
 
-    width: 500,
+    const croppedImage = croppedCanvas.toDataURL("image/png");
+    images[selectedSlot] = croppedImage;
 
-    height: 500
+    // Refresh UI //
+    createImageSlots();
+    displayFinal();
+
+    alert(`Image ${selectedSlot + 1} saved!`);
 
 });
 
+// Display Final Submissions //
+function displayFinal() {
 
-// Convert the crop to Base64
+    results.innerHTML = "";
 
-const croppedImage = croppedCanvas.toDataURL("image/png");
+    images.forEach(function(imageData, index) {
+        if (imageData) {
+            const img = document.createElement("img");
+            img.classList.add("result-image");
+            img.src = imageData;
+            img.alt = `Image ${index + 1}`;
+            results.appendChild(img)
+        } // End If //
+    });
 
+} // End Function
 
-// Save image in its slot
-
-images[selectedSlot] = croppedImage;
-
-
-// Update interface
-
+// Initialization Time Wahoo //
 createImageSlots();
-
-displayResults();
-
-
-alert(`Image ${selectedSlot + 1} saved!`);
-
-
-});
-
-// --------------------------------------------------
-// DISPLAY FINAL IMAGES
-// --------------------------------------------------
-
-function displayResults() {
-
-results.innerHTML = "";
-
-
-images.forEach(function(imageData, index) {
-
-    if (imageData) {
-
-        const img = document.createElement("img");
-
-        img.classList.add("result-image");
-
-        img.src = imageData;
-
-        img.alt = `Image ${index + 1}`;
-
-        results.appendChild(img);
-
-    }
-
-});
-
-}
-
-// --------------------------------------------------
-// INITIALIZE
-// --------------------------------------------------
-
-createImageSlots();
-displayResults();
+displayFinal();
