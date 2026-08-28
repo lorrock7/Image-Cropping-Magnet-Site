@@ -1,67 +1,167 @@
 // Variables //
-let cropper;
+const MAX_IMAGES = 4;
 
-// Constants //
+let cropper = null;
+let selectedSlot = null;
+
+// Storing images to allow for multiple submissions //
+let images = new Array(MAX_IMAGES).fill(null);
+
 const image = document.getElementById("image");
-const input = document.getElementById("imageInput");
-const canvas = document.getElementById("canvas");
+const imageInput = document.getElementById("imageInput");
 const cropButton = document.getElementById("cropButton");
 
-// Functions //
-input.addEventListener("change", function(e){
+const imageSlots = document.getElementById("imageSlots");
+const results = document.getElementById("results");
+const editor = document.getElementById("editor");
 
-    const files = e.target.files;
+// Image Slots for Uploads //
+function createImageSlots() {
 
-    if(files && files.length > 0){
-        const reader = new FileReader();
-        reader.onload = function(event){
-            image.src = event.target.result;
-            image.onload = function(){
+    imageSlots.innerHTML = "";
 
-                // Kill Previous Instance //
-                if(cropper){
-                    cropper.destroy();
-                } // End If //
+    for (let i = 0; i < MAX_IMAGES; i++) {
+        
+        const slot = document.createElement("div");
+        slot.classList.add("image-slot");
+        slot.dataset.index = i;
+        const number = document.createElement("div");
+        number.classList.add("slot-number");
+        number.textContent = `Image ${i + 1}`;
+        slot.appendChild(number);
 
-                cropper = new Cropper(image,{
-                    aspectRatio:1,
-                    viewMode:1,
-                    dragMode:'move',
-                    autoCropArea:1,
-                    responsive:true,
-                    movable:true,
-                    zoomable:false,
-                    scalable:false,
-                    rotatable:false
-                });
+        // Displaying selected cropped images //
+        if (images[i]) {
+            const img = document.createElement("img");
+            img.src = images[i];
+            slot.appendChild(img);
+        } // End If //
+        else {
+            const text = document.createElement("div");
+            text.classList.add("empty-slot");
+            text.textContent = "Click to Upload";
+            slot.appendChild(text);
+        } // End Else //
 
-            } // End Function //
+        // Allows Slots to be clicked and reselected //
+        slot.addEventListener("click", function() {
+            selectSlot(i);
+        });
 
-        } // End Function //
+        imageSlots.appendChild(slot);
 
-        reader.readAsDataURL(files[0]);
+    } // End For //
 
+} // End Function //
+
+// Select Slot for Image Upload //
+function selectSlot(index) {
+    
+    selectedSlot = index;
+    editor.style.display = "block";
+
+    // Handles if an image has already been uploaded //
+    if (images[index]) {
+        loadImage(images[index]);
+    } // End If //
+    // No image fresh upload //
+    else {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        } // End If //
+        image.src = "";
+        imageInput.value = "";
+    } // End Else //
+
+} // End Function //
+
+// Image Upload //
+imageInput.addEventListener("change", function(event) {
+
+    const file = event.target.files[0];
+    if (!file) {
+        return;
     } // End If //
 
-}); // End Event Listener //
+    const reader = new FileReader();
 
-cropButton.addEventListener("click", function(){
+    reader.onload = function(event) {
+        loadImage(event.target.result);
+    };
 
-    if(!cropper) return;
-
-    const croppedCanvas = cropper.getCroppedCanvas({ width:500, height:500 });
-
-    canvas.width = 500;
-    canvas.height = 500;
-
-    const ctx = canvas.getContext("2d");
-
-    ctx.clearRect(0,0,500,500);
-    ctx.drawImage(croppedCanvas,0,0);
-
-    // Base64 string <!> MAY NEED BLOB <!> //
-    const imageData = croppedCanvas.toDataURL("image/png");
-
-    console.log(imageData);
+    reader.readAsDataURL(file);
 
 });
+
+// Allow Photo to be Cropped in the Cropper //
+function loadImage(imageSource) {
+
+    // Destroy Cropper Instance //
+    if (cropper) {
+        cropper.destroy();
+        cropper = null;
+    } // End If //
+
+    image.src = imageSource;
+    image.onload = function() {
+        cropper = new Cropper(image, {
+            aspectRatio: 1,
+            viewMode: 1,
+            dragMode: "move",
+            autoCropArea: 1,
+            responsive: true,
+            movable: true,
+            zoomable: true,
+            scalable: false,
+            rotatable: false
+        });
+    };
+
+} // End Function //
+
+// Save Current Crop //
+cropButton.addEventListener("click", function() {
+
+    if (!cropper || selectedSlot === null) {
+        alert("Please select an image first.");
+        return;
+    } // End If //
+
+
+    const croppedCanvas = cropper.getCroppedCanvas({
+        width: 500,
+        height: 500
+    });
+
+    const croppedImage = croppedCanvas.toDataURL("image/png");
+    images[selectedSlot] = croppedImage;
+
+    // Refresh UI //
+    createImageSlots();
+    displayFinal();
+
+    alert(`Image ${selectedSlot + 1} saved!`);
+
+});
+
+// Display Final Submissions //
+function displayFinal() {
+
+    results.innerHTML = "";
+
+    images.forEach(function(imageData, index) {
+        if (imageData) {
+            const img = document.createElement("img");
+            img.classList.add("result-image");
+            img.src = imageData;
+            img.alt = `Image ${index + 1}`;
+            results.appendChild(img)
+        } // End If //
+    });
+
+} // End Function
+
+// Initialization Time Wahoo //
+createImageSlots();
+displayFinal();
