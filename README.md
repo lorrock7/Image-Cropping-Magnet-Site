@@ -1,3 +1,5 @@
-Allows a user to crop an image directly in the website after uploading it, be able to review it, and then send the finalized version to be printed onto a magnet.
+Allows a user to crop an image directly in the website after uploading it and be able to review it.
+
+This will be edited later and implemented into the website including full image uploading to server in order to access them. 
 
 Working on allowing it to upload from google photos and dropbox as well.
